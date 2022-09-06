@@ -96,3 +96,287 @@ Cluster Healthy:
 ------------------------
 
 kubectl get componentstatuses
+
+--------------------------------------------------------------------
+
+kubectl get nodes
+
+kubectl describe nodes ip-172-31-9-186
+
+kubectl get nodes -o wide
+--------------------------------------------------------------------
+
+kube-proxy:
+
+kubectl get daemonsets --namespace=kube-system kube-proxy
+
+----------------------------------------------------------------------------
+
+kuberenetes DNS:
+
+kubectl get deployments --namespace=kube-system coredns
+
+kubectl get services --namespace=kube-system
+
+--------------------------------------------------------------
+
+
+kubectl api-resources
+
+----------------------------------------------
+
+kubectl apply -f hello-pod.yaml
+
+kubectl describe pod hello-world
+
+kubectl delete -f hello-pod.yml
+
+----------------------------------------------------------
+
+Imperetive :
+
+kubectl run --help
+kubectl run hello-pod --image jenkins/jenkins:lts-jdk11
+kubectl delete pods hello-pod
+
+docker container run --name mynginx -P -d nginx:1.23.0
+
+----------------------------------------------------------------
+
+Declarative:
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+    - image: nginx:1.23.0
+      name: my-nginx
+      ports:
+        - containerPort: 80
+
+------------------------------------------------------------------
+
+In docker to execute the command in the container
+execute command:
+
+ docker container exec mynginx pwd
+
+
+get interactive session:
+
+docker container exec -it mynginx /bin/bash
+
+In k8s also we can do the above
+execute command:
+
+kubectl exec nginx-pod -- pwd
+
+get interactive session:
+
+ kubectl exec -it nginx-pod -- /bin/bash
+
+---------------------------------------------------------------------
+
+docker container run --name myalpine -d alpine:3 sleep 1d
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: alpine-pod
+spec:
+  containers:
+    - name: myalpine
+      image: alpine:3 
+      command: 
+        - sleep
+        - 1d
+
+        --------------------------------------------------------------
+
+
+
+        MYSQL:
+
+        docker container run -d -P -e MYSQL_ROOT_PASSWORD=rootroot --name mysqldb mysql:8
+
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-pod
+spec:
+  containers:
+    - name: mysqldb
+      image: mysql:8
+      ports:
+        - containerPort: 3306
+      env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: rootroot
+
+
+ ----------------------------------------------------------------------------------------
+
+ init-containers:
+
+ ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: init-containers
+spec:
+  containers:
+    - name: jenkins
+      image: jenkins/jenkins:latest
+      ports:
+        - containerPort: 8080
+  initContainers:
+    - name: init-api-service
+      image: alpine:3
+      command: ["sleep", "30s"]
+    - name: init-db-service
+      image: alpine:3
+      command: ["sleep", "30s"]
+-------------------------------------------------------------------------------
+
+Requests-lowerLimit
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: resource-requests
+spec:
+  containers:
+    - image: jenkins/jenkins:lts-jdk11
+      name: jenkins
+      ports:
+        - containerPort: 8080
+          protocol: TCP
+      resources:
+        requests:
+          cpu: "250m"
+          memory: "256Mi"
+
+          ------------------------------------------------------------------------------
+
+          Limits:
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: resource-requests
+spec:
+  containers:
+    - image: jenkins/jenkins:lts-jdk11
+      name: jenkins
+      ports:
+        - containerPort: 8080
+          protocol: TCP
+      resources:
+        limits:
+          cpu: "1000m"
+          memory: "1000Mi"
+
+-----------------------------------------------------------------------------------------------
+Requests & Limits:
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: resource-requests
+spec:
+  containers:
+    - image: jenkins/jenkins:lts-jdk11
+      name: jenkins
+      ports:
+        - containerPort: 8080
+          protocol: TCP
+      resources:
+        requests:
+          cpu: "250m"
+          memory: "256Mi"
+        limits:
+          cpu: "1000m"
+          memory: "1000Mi"
+---------------------------------------------------------------------------------------
+
+
+Replicas:
+
+kubectl get rs -o wide
+
+kubectl describe rs nginx-rs
+
+kubectl scale replicaset nginx-rs --replicas=4
+
+kubectl get rs
+
+kubectl get pods
+
+--------------------------------------------------------------------------
+
+Daemonsets: pod in 2 nodes
+
+
+kubectl get ds
+
+kubectl get pods -o wide
+
+kubectl describe daemonsets fluentd
+
+Daemonset: Pod in one node selctor
+
+kubectl label nodes ip-172-16-99-160 ssd=true
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: specificnodes-ds
+  labels:
+    app: fluentd
+spec:
+  minReadySeconds: 10
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+        purpose: logcollection
+    spec:
+      nodeSelector:
+        ssd: "true"
+      containers:
+        - name: fluentd
+          image: fluentd:latest
+          ports:
+            - containerPort: 24224
+--------------------------------------------------------------------------------------------------------
+
+Service:
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+  labels:
+    svc: lb
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+  selector:
+    app: nginx
+    version: "1.23.0"
+  type: LoadBalancer
+
