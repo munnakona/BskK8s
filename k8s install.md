@@ -380,3 +380,87 @@ spec:
     version: "1.23.0"
   type: LoadBalancer
 
+--------------------------------------------------------------------------------
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: nginx-rs
+  labels:
+    app: nginx
+    version: "1.23.0"
+spec:
+  minReadySeconds: 3
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+      version: "1.23.0"
+  template:
+    metadata:
+      labels:
+        app: nginx
+        version: "1.23.0"
+        size: large
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.23.0
+          ports:
+            - containerPort: 80
+            - containerPort: 80
+          livenessProbe:
+            exec: 
+              command: pwd
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 3
+-----------------------------------------------------------------------------
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deploy
+  labels:
+    app: webapp
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: webapp
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 20%
+      maxUnavailable: 20%
+       template:
+    metadata:
+      labels:
+        app: webapp
+        version: v1
+    spec:
+      containers:
+        - image: nginx
+          name: qtwebapp
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+          ports:
+          - containerPort: 80
+
+          -----------------------------------------------------------------------------
+
+
+          SQL:
+
+          docker container run -d --name mysql -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=test -e MYSQL_USER=directdevops -e MYSQL_PASSWORD=directdevops mysql:5.6
+
+          docker inspect mysql | grep IPAddress
+
+
+          docker container run -d --name mypythonapp -e MYSQL_SERVER=172.17.0.2 -p 8080:8080 studentcourserestservice:1.0
